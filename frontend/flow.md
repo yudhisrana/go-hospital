@@ -63,15 +63,3 @@ Catat `id` pasien dari response (akan digunakan sebagai `ID Pasien`).
 8. Tab "Ambil Obat": masukkan `ID Kunjungan` dan klik **Selesai & Berikan Obat** — ini akan menandai kunjungan sebagai `completed`.
 
 9. Kembali ke Dasbor → klik `Refresh Dashboard` untuk melihat statistik terkini.
-
----
-
-## Catatan untuk Presentasi
-- Pastikan backend dan database berjalan sebelum demo.
-- Gunakan Postman atau terminal untuk membuat pasien jika belum ada (step 3).
-- Frontend ini hanya untuk demo alur; tidak ada autentikasi.
-- Jika ingin otomatis membuat pasien demo, saya bisa tambahkan tombol "Buat Demo Patient" di UI.
-
----
-
-Jika Anda ingin, saya bisa tambahkan fitur tombol "Buat Demo Patient" pada UI untuk mempermudah demo (tanpa perlu cURL).
