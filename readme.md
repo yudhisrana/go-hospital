@@ -166,6 +166,7 @@ Contoh status yang dapat digunakan dalam sistem:
 - id
 - nik
 - nama
+- umur
 - jenis kelamin
 - tanggal lahir
 - alamat
