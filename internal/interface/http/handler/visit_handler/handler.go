@@ -17,7 +17,7 @@ func NewVisitHandler(usc *usecase.VisitUseCase) *Handler {
 	return &Handler{usc: usc}
 }
 
-// POST /visits/register
+// RegisterVisitHandler POST /visits/register
 func (h *Handler) RegisterVisitHandler(c fiber.Ctx) error {
 	var req dto.RegisterVisitRequest
 
@@ -38,7 +38,7 @@ func (h *Handler) RegisterVisitHandler(c fiber.Ctx) error {
 	return response.JsonSuccessResponse(c, fiber.StatusCreated, dto.NewVisitResponse(visit), "Pasien berhasil didaftar, nomor antrean: "+string(rune(visit.QueueNumber())))
 }
 
-// PATCH /visits/:id/examine
+// ExaminePatientHandler PATCH /visits/:id/examine
 func (h *Handler) ExaminePatientHandler(c fiber.Ctx) error {
 	visitID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -70,7 +70,7 @@ func (h *Handler) ExaminePatientHandler(c fiber.Ctx) error {
 	return response.JsonSuccessResponse(c, fiber.StatusOK, dto.NewVisitResponse(visit), "Pasien berhasil diperiksa, menunggu apotek")
 }
 
-// PATCH /visits/:id/dispense
+// DispenseMedicineHandler PATCH /visits/:id/dispense
 func (h *Handler) DispenseMedicineHandler(c fiber.Ctx) error {
 	visitID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -88,7 +88,7 @@ func (h *Handler) DispenseMedicineHandler(c fiber.Ctx) error {
 	return response.JsonSuccessResponse(c, fiber.StatusOK, dto.NewVisitResponse(visit), "Obat berhasil diberikan, visit selesai")
 }
 
-// GET /visits
+// FindAllVisitHandler GET /visits
 func (h *Handler) FindAllVisitHandler(c fiber.Ctx) error {
 	visits, err := h.usc.FindAllVisit.Execute(c.Context())
 	if err != nil {
@@ -107,7 +107,7 @@ func (h *Handler) FindAllVisitHandler(c fiber.Ctx) error {
 	return response.JsonSuccessResponse(c, fiber.StatusOK, responses, "Data visit berhasil diambil")
 }
 
-// GET /visits/:id
+// FindVisitByIDHandler GET /visits/:id
 func (h *Handler) FindVisitByIDHandler(c fiber.Ctx) error {
 	visitID, err := uuid.Parse(c.Params("id"))
 	if err != nil {
@@ -126,7 +126,7 @@ func (h *Handler) FindVisitByIDHandler(c fiber.Ctx) error {
 	return response.JsonSuccessResponse(c, fiber.StatusOK, dto.NewVisitResponse(visit), "Visit berhasil ditemukan")
 }
 
-// GET /visits?status=waiting_doctor
+// FindVisitByStatusHandler GET /visits?status=waiting_doctor
 func (h *Handler) FindVisitByStatusHandler(c fiber.Ctx) error {
 	status := c.Query("status", "")
 	if status == "" {
