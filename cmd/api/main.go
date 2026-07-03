@@ -8,11 +8,14 @@ import (
 	"time"
 
 	"github.com/yudhisrana/go-hospital/internal/application/patient/usecase"
+	visituc "github.com/yudhisrana/go-hospital/internal/application/visit/usecase"
 	"github.com/yudhisrana/go-hospital/internal/infra/config"
 	"github.com/yudhisrana/go-hospital/internal/infra/persistence/relational"
 	"github.com/yudhisrana/go-hospital/internal/infra/persistence/relational/sqlite/patient_repo"
+	"github.com/yudhisrana/go-hospital/internal/infra/persistence/relational/sqlite/visit_repo"
 	"github.com/yudhisrana/go-hospital/internal/interface/http"
 	"github.com/yudhisrana/go-hospital/internal/interface/http/handler/patient_handler"
+	"github.com/yudhisrana/go-hospital/internal/interface/http/handler/visit_handler"
 	"github.com/yudhisrana/go-hospital/internal/interface/http/routes"
 )
 
@@ -28,9 +31,14 @@ func main() {
 	patientUsecase := usecase.NewPatientUseCase(patientRepo)
 	patientHandler := patient_handler.NewPatientHandler(patientUsecase)
 
+	visitRepo := visit_repo.NewRepository(db.DB())
+	visitUsecase := visituc.NewVisitUseCase(visitRepo)
+	visitHandler := visit_handler.NewVisitHandler(visitUsecase)
+
 	srv := http.NewServer(cfg.AppCfg)
 
 	routes.RegisterPatientRoutes(srv.App(), patientHandler)
+	routes.RegisterVisitRoutes(srv.App(), visitHandler)
 
 	serverErrors := make(chan error, 1)
 

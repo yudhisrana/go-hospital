@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Go Hospital - Sistem Manajemen Rumah Sakit</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header class="header">
+            <div class="header-content">
+                <h1>🏥 Go Hospital</h1>
+                <p>Sistem Manajemen Alur Pelayanan Rumah Sakit</p>
+            </div>
+        </header>
+
+        <!-- Navigation -->
+        <nav class="nav-tabs">
+            <button class="tab-button active" data-tab="dashboard">📊 Dasbor</button>
+            <button class="tab-button" data-tab="register-visit">➕ Daftar Kunjungan</button>
+            <button class="tab-button" data-tab="examine">🩺 Periksa Pasien</button>
+            <button class="tab-button" data-tab="dispense">💊 Ambil Obat</button>
+            <button class="tab-button" data-tab="visits">📋 Daftar Kunjungan</button>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+
+            <!-- Dashboard Tab -->
+            <div id="dashboard" class="tab-content active">
+                <h2>Dashboard</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-number" id="total-visits">0</div>
+                        <div class="stat-label">Total Visits</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="registered-visits">0</div>
+                        <div class="stat-label">Registered</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="waiting-visits">0</div>
+                        <div class="stat-label">Waiting Pharmacy</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-number" id="completed-visits">0</div>
+                        <div class="stat-label">Completed</div>
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="refreshDashboard()">Refresh Dashboard</button>
+            </div>
+
+            <!-- Register Visit Tab -->
+            <div id="register-visit" class="tab-content">
+                <h2>Daftar Kunjungan (Resepsionis)</h2>
+                <form id="registerForm" class="form-group">
+                    <div class="form-field">
+                        <label>Cari pasien (NIK atau nama):</label>
+                        <div style="display:flex;gap:8px;align-items:center;">
+                            <input type="text" id="patientQuery" placeholder="Masukkan NIK atau nama" />
+                            <button type="button" class="btn btn-secondary" onclick="searchPatient()">Cari</button>
+                            <button type="button" class="btn btn-secondary" onclick="toggleCreatePatient()">Buat Pasien Baru</button>
+                        </div>
+                        <div id="patientSearchResult" style="margin-top:8px;color:var(--muted)"></div>
+                    </div>
+
+                    <div id="createPatientBox" style="display:none;padding:8px;border:1px dashed var(--border);border-radius:8px;">
+                        <h4>Buat Pasien Baru</h4>
+                        <div class="form-field">
+                            <label>NIK:</label>
+                            <input type="text" id="new_nik" placeholder="16 digit NIK" />
+                        </div>
+                        <div class="form-field">
+                            <label>Nama:</label>
+                            <input type="text" id="new_name" placeholder="Nama lengkap" />
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <div style="flex:1" class="form-field">
+                                <label>Umur:</label>
+                                <input type="number" id="new_age" />
+                            </div>
+                            <div style="flex:1" class="form-field">
+                                <label>Gender:</label>
+                                <input type="text" id="new_gender" placeholder="male/female" />
+                            </div>
+                        </div>
+                        <div class="form-field">
+                            <label>Tanggal Lahir (ISO):</label>
+                            <input type="text" id="new_birthdate" placeholder="YYYY-MM-DDTHH:MM:SSZ" />
+                        </div>
+                        <div class="form-field">
+                            <label>Alamat:</label>
+                            <input type="text" id="new_address" />
+                        </div>
+                        <div class="form-field">
+                            <label>Telepon:</label>
+                            <input type="text" id="new_phone" />
+                        </div>
+                        <div style="display:flex;gap:8px;">
+                            <button type="button" class="btn btn-primary" onclick="createPatient()">Buat & Pilih Pasien</button>
+                            <button type="button" class="btn btn-secondary" onclick="toggleCreatePatient()">Batal</button>
+                        </div>
+                    </div>
+
+                    <div class="form-field">
+                        <label>ID Pasien Terpilih:</label>
+                        <input type="text" id="patientId" placeholder="ID pasien akan terisi otomatis setelah pilih atau buat pasien" readonly required>
+                    </div>
+
+                    <div class="form-field">
+                        <label>Gejala / Keluhan:</label>
+                        <textarea id="symptoms" placeholder="Jelaskan gejala pasien..." required></textarea>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="registerVisit()">Daftarkan Kunjungan</button>
+                </form>
+                <div id="registerResponse" class="response-box"></div>
+            </div>
+
+            <!-- Examine Tab -->
+            <div id="examine" class="tab-content">
+                <h2>Periksa Pasien (Dokter)</h2>
+                <form id="examineForm" class="form-group">
+                    <div class="form-field">
+                        <label>ID Kunjungan:</label>
+                        <input type="text" id="visitId" placeholder="ID Kunjungan" required>
+                    </div>
+                    <div class="form-field">
+                        <label>Diagnosis:</label>
+                        <textarea id="diagnosis" placeholder="Tulis diagnosis dokter..." required></textarea>
+                    </div>
+                    <div class="form-field">
+                        <label>Resep Obat:</label>
+                        <div id="prescriptionFields"></div>
+                        <button type="button" class="btn btn-secondary" onclick="addPrescriptionField()">+ Tambah Obat</button>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="examinePatient()">Simpan Pemeriksaan</button>
+                </form>
+                <div id="examineResponse" class="response-box"></div>
+            </div>
+
+            <!-- Dispense Tab -->
+            <div id="dispense" class="tab-content">
+                <h2>Ambil Obat (Apoteker)</h2>
+                <form id="dispenseForm" class="form-group">
+                    <div class="form-field">
+                        <label>ID Kunjungan:</label>
+                        <input type="text" id="dispenseVisitId" placeholder="ID Kunjungan" required>
+                    </div>
+                    <button type="button" class="btn btn-primary" onclick="dispenseMedicine()">Selesai & Berikan Obat</button>
+                </form>
+                <div id="dispenseResponse" class="response-box"></div>
+            </div>
+
+            <!-- Visits List Tab -->
+            <div id="visits" class="tab-content">
+                <h2>Daftar Kunjungan</h2>
+                <div class="filter-section">
+                    <button class="btn btn-secondary" onclick="loadAllVisits()">Semua Kunjungan</button>
+                    <button class="btn btn-secondary" onclick="loadVisitsByStatus('registered')">Terdaftar</button>
+                    <button class="btn btn-secondary" onclick="loadVisitsByStatus('waiting_pharmacy')">Menunggu Apotek</button>
+                    <button class="btn btn-secondary" onclick="loadVisitsByStatus('completed')">Selesai</button>
+                </div>
+                <div id="visitsList" class="visits-list"></div>
+            </div>
+
+        </main>
+
+        <!-- Footer -->
+        <footer class="footer">
+            <p>Go Hospital API: <code>http://localhost:8080</code> | Ready for Presentation ✅</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
+

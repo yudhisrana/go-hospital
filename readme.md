@@ -1,381 +1,206 @@
-# Go Hospital
-
-`Go Hospital` adalah API web service untuk manajemen klinik / rumah sakit yang membantu mengatur alur pelayanan pasien dari pendaftaran hingga pengambilan obat.
-
-Proyek ini dirancang agar proses pelayanan menjadi lebih rapi, terstruktur, dan mudah dipantau oleh resepsionis, dokter, apoteker, dan admin.
-
+# Go Hospital - Hospital Management System
+Go Hospital adalah API web service untuk manajemen klinik/rumah sakit yang membantu mengatur alur pelayanan pasien dari pendaftaran hingga pengambilan obat.
+Proyek ini dirancang menggunakan **Clean Architecture (Domain-Driven Design)** dengan Fiber web framework dan SQLite database.
 ---
-
-## Tujuan Sistem
-
-Sistem ini dibuat untuk menangani kebutuhan utama berikut:
-
-- Pendaftaran pasien
-- Pengelolaan antrean pemeriksaan dokter
-- Pencatatan pemeriksaan medis
-- Pembuatan resep obat digital
-- Pengelolaan antrean pengambilan obat
-- Pengelolaan data master rumah sakit / klinik
-- Monitoring status pelayanan pasien
-
----
-
-## Alur Pelayanan Pasien
-
-Berikut alur kerja utama pada `Go Hospital`:
-
-1. Pasien datang ke klinik / rumah sakit.
-2. Pasien daftar ke resepsionis.
-3. Resepsionis mengisi data pasien dan keluhan / gejala sakit.
-4. Pasien mendapatkan nomor antrean pemeriksaan dokter.
-5. Pasien menunggu sampai dipanggil dokter.
-6. Dokter memeriksa pasien di ruangan pemeriksaan.
-7. Setelah pemeriksaan selesai, dokter menulis diagnosis dan resep obat.
-8. Resep dikirim ke bagian farmasi / apotek.
-9. Pasien keluar dari ruang dokter dan mendapatkan nomor antrean pengambilan obat.
-10. Apoteker menyiapkan obat sesuai resep.
-11. Pasien dipanggil untuk mengambil obat.
-12. Setelah obat diterima, pasien pulang dan proses selesai.
-
-### Flow Singkat
-
-```text
-Pasien datang
-   -> daftar ke resepsionis
-   -> isi data & gejala sakit
-   -> dapat nomor antrean dokter
-   -> menunggu dipanggil dokter
-   -> diperiksa dokter
-   -> dokter menulis resep obat
-   -> masuk antrean apotek
-   -> ambil obat
-   -> pulang / selesai
+## 🏥 Alur Pelayanan Pasien
 ```
-
+Pasien datang
+   → Daftar ke Resepsionis (Register Visit)
+   → Isi data & gejala sakit
+   → Dapat nomor antrean dokter (Auto-generated)
+   → Menunggu dipanggil dokter
+   → Diperiksa dokter (Doctor Examine)
+   → Dokter menulis diagnosis & resep obat
+   → Masuk antrean apotek
+   → Ambil obat (Pharmacy Dispense)
+   → Pulang / Selesai
+```
+### Status Workflow
+- `registered` - Pasien sudah daftar, menunggu dokter
+- `waiting_pharmacy` - Pemeriksaan selesai, menunggu obat
+- `completed` - Visit selesai, pasien pulang
 ---
-
-## Fitur yang Dibutuhkan
-
-### 1. Modul Pendaftaran Pasien
-
-- Tambah data pasien baru
-- Cari pasien lama berdasarkan NIK / nama / nomor telepon
-- Simpan data keluhan / gejala sakit
-- Buat kunjungan pasien
-- Generate nomor antrean otomatis
-
-### 2. Modul Antrean Dokter
-
-- Menampilkan daftar pasien yang menunggu
-- Memanggil pasien berdasarkan nomor antrean
-- Ubah status antrean: menunggu, dipanggil, diperiksa, selesai
-- Filter antrean berdasarkan dokter / poli / tanggal
-
-### 3. Modul Pemeriksaan Dokter
-
-- Input hasil pemeriksaan
-- Input diagnosis pasien
-- Input catatan medis
-- Simpan rekam medis pasien
-- Buat resep obat digital
-- Hubungkan resep dengan kunjungan pasien
-
-### 4. Modul Apotek / Farmasi
-
-- Menampilkan antrean resep obat
-- Menyiapkan obat sesuai resep
-- Mengurangi stok obat saat obat keluar
-- Menandai resep sudah diserahkan
-- Generate nomor antrean pengambilan obat
-
-### 5. Modul Manajemen Obat
-
-- CRUD data obat
-- Data nama obat, kode, satuan, stok, harga
-- Monitoring stok minimum
-- Riwayat penggunaan obat
-
-### 6. Modul Admin / Master Data
-
-- CRUD data user sistem
-- CRUD data dokter
-- CRUD data pasien
-- CRUD data poli / ruangan
-- Pengaturan role dan hak akses
-- Monitoring aktivitas sistem
-
-### 7. Modul Laporan
-
-- Laporan jumlah pasien harian / mingguan / bulanan
-- Laporan antrean pemeriksaan
-- Laporan penggunaan obat
-- Laporan resep yang telah diselesaikan
-- Statistik pelayanan per dokter / poli
-
+## 📋 API Endpoints
+### Patient Management
+```
+GET    /patients              # Lihat semua pasien
+GET    /patients/:id          # Detail pasien
+POST   /patients              # Tambah pasien baru
+PUT    /patients/:id          # Update pasien
+DELETE /patients/:id          # Hapus pasien
+```
+### Visit Management (Workflow Rumah Sakit)
+```
+POST   /visits/register       # Resepsionis: Daftar pasien baru
+PATCH  /visits/:id/examine    # Dokter: Periksa & buat resep
+PATCH  /visits/:id/dispense   # Apoteker: Berikan obat
+GET    /visits                # Lihat semua visit
+GET    /visits/:id            # Detail visit
+GET    /visits/status/:status # Filter berdasarkan status
+```
 ---
-
-## Role Pengguna
-
-### Admin
-
-- Mengelola master data
-- Mengatur user dan role
-- Melihat laporan keseluruhan sistem
-
-### Resepsionis
-
-- Mendaftarkan pasien
-- Mengisi data keluhan awal
-- Membuat antrean dokter
-- Melihat status kunjungan pasien
-
-### Dokter
-
-- Melihat antrean pasien
-- Memeriksa pasien
-- Menulis diagnosis
-- Membuat resep obat
-
-### Apoteker
-
-- Melihat antrean resep
-- Menyiapkan obat
-- Mengelola stok obat
-- Menyerahkan obat ke pasien
-
----
-
-## Status Proses Pasien
-
-Contoh status yang dapat digunakan dalam sistem:
-
-- `registered` = pasien sudah daftar
-- `waiting_doctor` = menunggu dokter
-- `being_examined` = sedang diperiksa dokter
-- `prescription_created` = resep sudah dibuat
-- `waiting_pharmacy` = menunggu obat di apotek
-- `medicine_dispensed` = obat sudah diberikan
-- `completed` = proses selesai
-
----
-
-## Entitas / Data Utama
-
-### Pasien
-
-- id
-- nik
-- nama
-- umur
-- jenis kelamin
-- tanggal lahir
-- alamat
-- nomor telepon
-
-### User
-
-- id
-- nama
-- username
-- password
-- role
-
-### Dokter
-
-- id
-- user_id
-- nama dokter
-- spesialisasi
-- poli / ruangan
-
-### Kunjungan
-
-- id
-- pasien_id
-- dokter_id
-- keluhan
-- nomor antrean
-- status
-- tanggal kunjungan
-
-### Rekam Medis
-
-- id
-- kunjungan_id
-- diagnosis
-- catatan dokter
-- tanggal pemeriksaan
-
-### Resep
-
-- id
-- rekam_medis_id
-- status
-- tanggal dibuat
-
-### Resep Detail
-
-- id
-- resep_id
-- obat_id
-- jumlah
-- aturan pakai
-
-### Obat
-
-- id
-- nama obat
-- kode obat
-- stok
-- satuan
-- harga
-
----
-
-## Rancangan Endpoint API
-
-Berikut contoh endpoint yang bisa digunakan pada web service ini.
-
-### Auth
-
-- `POST /api/v1/auth/login`
-- `POST /api/v1/auth/logout`
-- `GET /api/v1/auth/me`
-
-### Pasien
-
-- `GET /api/v1/patients`
-- `GET /api/v1/patients/:id`
-- `POST /api/v1/patients`
-- `PUT /api/v1/patients/:id`
-- `DELETE /api/v1/patients/:id`
-
-### Kunjungan / Antrean
-
-- `GET /api/v1/visits`
-- `GET /api/v1/visits/:id`
-- `POST /api/v1/visits`
-- `PATCH /api/v1/visits/:id/status`
-- `GET /api/v1/queues/doctor`
-- `GET /api/v1/queues/pharmacy`
-
-### Dokter
-
-- `POST /api/v1/doctor/examinations`
-- `GET /api/v1/doctor/examinations/:visit_id`
-- `POST /api/v1/doctor/prescriptions`
-- `GET /api/v1/doctor/prescriptions/:id`
-
-### Apotek
-
-- `GET /api/v1/pharmacy/prescriptions`
-- `GET /api/v1/pharmacy/prescriptions/:id`
-- `PATCH /api/v1/pharmacy/prescriptions/:id/dispense`
-- `GET /api/v1/pharmacy/medicines`
-- `POST /api/v1/pharmacy/medicines`
-- `PUT /api/v1/pharmacy/medicines/:id`
-- `PATCH /api/v1/pharmacy/medicines/:id/stock`
-
-### Admin / Master Data
-
-- `GET /api/v1/users`
-- `POST /api/v1/users`
-- `GET /api/v1/doctors`
-- `POST /api/v1/doctors`
-- `GET /api/v1/polies`
-- `POST /api/v1/polies`
-
----
-
-## Struktur Proyek
-
-Struktur folder pada repository ini mengikuti pendekatan clean architecture.
-
-```text
+## 🗂️ Struktur Proyek (Clean Architecture)
+```
 go-hospital/
 ├── cmd/
 │   └── api/
-│       └── main.go
+│       └── main.go                          # Entry point aplikasi
 ├── internal/
 │   ├── application/
+│   │   ├── patient/
+│   │   │   ├── dto/                         # Data Transfer Object
+│   │   │   └── usecase/                     # Business Logic
+│   │   └── visit/
+│   │       ├── dto/
+│   │       └── usecase/
 │   ├── domain/
+│   │   ├── patient/
+│   │   │   ├── entity/                      # Patient entity
+│   │   │   ├── repository/                  # Interface repository
+│   │   │   └── valueobject/                 # Value objects (NIK, Name, dll)
+│   │   └── visit/
+│   │       ├── entity/                      # Visit entity
+│   │       └── repository/
 │   ├── infra/
-│   │   ├── config/
+│   │   ├── config/                          # Configuration
 │   │   └── persistence/
+│   │       └── relational/
+│   │           ├── sqlite/
+│   │           │   ├── patient_repo/        # Patient repository impl
+│   │           │   └── visit_repo/          # Visit repository impl
+│   │           └── migrations/              # Database migrations
 │   └── interface/
 │       └── http/
+│           ├── fiber.go                     # HTTP server setup
+│           ├── handler/
+│           │   ├── patient_handler/         # Patient HTTP handlers
+│           │   └── visit_handler/           # Visit HTTP handlers
+│           └── routes/                      # Route definitions
 ├── pkg/
+│   └── response/                            # Response formatting
+├── frontend/                                # HTML/CSS/JS frontend
 ├── go.mod
+├── go.sum
+├── app.db                                   # SQLite database
 └── readme.md
 ```
-
+### Penjelasan Layer
+- **Domain**: Entities, Value Objects, Repository interfaces (business rules)
+- **Application**: Use Cases, DTOs (orchestration logic)
+- **Infrastructure**: Repository implementations, Database, Config (technical details)
+- **Interface**: HTTP handlers, Routes (client communication)
 ---
-
-## Teknologi yang Disarankan
-
-- Bahasa: Go
-- HTTP framework: Gin / Fiber / Chi
-- Database: PostgreSQL / MySQL
-- ORM / Query Builder: GORM / SQLX / Ent
-- Auth: JWT
-- Dokumentasi API: Swagger / OpenAPI
-- Migration: golang-migrate / goose
-
----
-
-## Contoh Skenario Penggunaan
-
-### Skenario 1 - Pasien Baru
-
-1. Pasien datang ke resepsionis.
-2. Resepsionis membuat data pasien baru.
-3. Resepsionis memasukkan keluhan pasien.
-4. Sistem membuat antrean dokter.
-5. Dokter memeriksa pasien.
-6. Dokter membuat resep.
-7. Apoteker menyiapkan obat.
-8. Pasien menerima obat dan selesai.
-
-### Skenario 2 - Pasien Lama
-
-1. Pasien datang dan datanya sudah tersimpan.
-2. Resepsionis mencari data pasien.
-3. Resepsionis membuat kunjungan baru.
-4. Proses berjalan seperti antrean dokter, pemeriksaan, resep, dan apotek.
-
----
-
-## Fitur Tambahan yang Bisa Dikembangkan
-
-- Notifikasi antrean ke pasien
-- Integrasi SMS / WhatsApp
-- Cetak nomor antrean
-- Cetak resep obat
-- Dashboard real-time
-- Audit log aktivitas user
-- Multi cabang klinik / rumah sakit
-- Integrasi pembayaran / kasir
-
----
-
-## Cara Menjalankan Project
-
-Jika project ini sudah memiliki source code API, biasanya langkah umum menjalankannya adalah:
-
+## 🚀 Cara Menjalankan
+### 1. Install Dependencies
 ```bash
 go mod tidy
+```
+### 2. Setup Database
+```bash
+sqlite3 app.db < setup_visits.sql
+```
+### 3. Jalankan Server
+```bash
 go run cmd/api/main.go
 ```
-
-Jika menggunakan file environment:
-
-```env
-PORT=8080
-DB_HOST=localhost
-DB_PORT=5432
-DB_USER=postgres
-DB_PASSWORD=secret
-DB_NAME=go_hospital
-JWT_SECRET=your_secret_key
+Server akan berjalan di `http://localhost:8080`
+---
+## 📦 Teknologi yang Digunakan
+- **Bahasa**: Go 1.26+
+- **HTTP Framework**: Fiber v3
+- **Database**: SQLite
+- **Architecture**: Clean Architecture / DDD
+- **UUID**: google/uuid
+- **Environment**: godotenv
+---
+## 🧪 Test API dengan cURL
+### 1. Register Visit (Resepsionis)
+```bash
+curl -X POST http://localhost:8080/visits/register \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patient_id": "a79f9a44-36a8-4592-ac4b-9fd963e5fc59",
+    "symptoms": "Demam tinggi, batuk"
+  }'
 ```
-
+### 2. Examine Patient (Dokter)
+```bash
+curl -X PATCH http://localhost:8080/visits/\{visit_id\}/examine \
+  -H "Content-Type: application/json" \
+  -d '{
+    "diagnosis": "Flu biasa",
+    "prescriptions": [
+      {"medicine": "Paracetamol", "dosage": "500mg x 3x", "quantity": 12},
+      {"medicine": "Amoxicillin", "dosage": "500mg x 2x", "quantity": 10}
+    ]
+  }'
+```
+### 3. Dispense Medicine (Apoteker)
+```bash
+curl -X PATCH http://localhost:8080/visits/\{visit_id\}/dispense
+```
+### 4. View Visit Details
+```bash
+curl http://localhost:8080/visits/\{visit_id\}
+```
+---
+## 📊 Database Schema
+### Tabel `patients`
+```sql
+id, nik, name, age, gender, birth_date, address, phone, created_at, updated_at
+```
+### Tabel `visits`
+```sql
+id, patient_id, status, queue_number, symptoms, diagnosis, prescription (JSON),
+registered_at, examined_at, dispensed_at, created_at, updated_at
+```
+### Tabel `medicines`
+```sql
+id, name, description, price, stock, created_at, updated_at
+```
+---
+## ✨ Fitur Implementasi
+### ✅ Phase 1 - Patient Management
+- CRUD Pasien
+- Validasi input (NIK, Age, Birth Date, Phone, Gender)
+- Error handling komprehensif
+- Response wrapper standard
+### ✅ Phase 2 - Hospital Workflow
+- Registrasi visit dengan auto-increment queue number
+- Pemeriksaan dokter dengan diagnosis & resep
+- Dispensing obat oleh apoteker
+- State machine: registered → waiting_pharmacy → completed
+- Filter visit berdasarkan status
+### 🎯 Nilai Plus
+- **Clean Architecture**: Separation of concerns yang jelas
+- **DDD Pattern**: Domain-driven entities dan repositories
+- **State-Driven**: Clear status transitions
+- **Proper HTTP**: Menggunakan method yang sesuai (POST, PATCH)
+- **Professional API**: Standard response format, error handling
+---
+## 🔗 Integrasi Frontend
+Frontend sudah tersedia di folder `/frontend` dengan interface untuk:
+- ✅ Daftar pasien
+- ✅ Register visit
+- ✅ Examine patient
+- ✅ Dispense medicine
+- ✅ View all visits & status
+Akses di `http://localhost:3000` (jika menggunakan live server)
+---
+## 📝 Catatan Penting
+- Database otomatis dibuat saat pertama kali menjalankan `setup_visits.sql`
+- Queue number di-generate otomatis per hari (reset setiap hari baru)
+- Prescription disimpan sebagai JSON text untuk fleksibilitas
+- Semua timestamp menggunakan RFC3339 format
+- API menggunakan UUID untuk semua ID
+---
+## 🎓 Untuk Presentasi
+Project ini mendemonstrasikan:
+1. **Complete Workflow** - Flow rumah sakit end-to-end
+2. **Clean Architecture** - Struktur kode yang maintainable & scalable
+3. **State Machine** - State transitions yang jelas
+4. **RESTful API** - Proper HTTP methods & status codes
+5. **Data Validation** - Comprehensive input validation
+6. **Error Handling** - Structured error responses
+---
+**Status**: ✅ Ready for Presentation
